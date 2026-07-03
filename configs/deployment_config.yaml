@@ -1,0 +1,10 @@
+server:
+  host: "0.0.0.0"
+  port_api: 8000
+  port_ui: 8501
+  port_cloud_run: 8080
+  port_hf_spaces: 7860
+
+paths:
+  models_dir: "models/"
+  data_dir: "data/"

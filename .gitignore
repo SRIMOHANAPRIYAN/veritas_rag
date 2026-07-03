@@ -1,0 +1,8 @@
+data/
+models/
+.env
+mlruns/
+__pycache__/
+*.duckdb
+*.egg-info/
+.pytest_cache/

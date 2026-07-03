@@ -1,0 +1,21 @@
+reranker:
+  base_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  epochs: 3
+  learning_rate: 2.0e-5
+  batch_size: 32
+  output_dir: "models/reranker/"
+
+nli:
+  base_model: "microsoft/deberta-v3-base"
+  epochs_base: 3
+  epochs_domain: 1
+  learning_rate: 2.0e-5
+  batch_size: 16
+  output_dir: "models/nli_verifier/"
+
+classifier:
+  base_model: "distilbert-base-uncased"
+  epochs: 3
+  learning_rate: 2.0e-5
+  batch_size: 32
+  output_dir: "models/query_classifier/"

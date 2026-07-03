@@ -1,0 +1,43 @@
+chunker:
+  model: "all-mpnet-base-v2"
+  similarity_threshold: 0.6       # calibrate per corpus: run scripts/calibrate_threshold.py
+  min_tokens: 150
+  max_tokens: 512
+  batch_size: 64
+
+indexer:
+  embedding_model: "all-mpnet-base-v2"
+  embedding_dim: 768
+  faiss_index_path: "data/indexes/faiss.index"
+  bm25_index_path: "data/indexes/bm25.pkl"
+  metadata_db_path: "data/indexes/metadata.db"
+
+retriever:
+  top_k_dense: 100
+  top_k_sparse: 100
+  top_k_fused: 50
+  rrf_k: 60
+
+reranker:
+  model_path: "models/reranker/"
+  top_k_reranked: 8
+
+generation:
+  model_path: "models/llm/llama31-8b-q4.gguf"
+  device: "mps"                   # M5 Mac GPU via Metal
+  max_tokens: 512
+  temperature: 0.0
+
+verification:
+  nli_model_path: "models/nli_verifier/"
+  entailment_threshold: 0.80
+  contradiction_threshold: 0.70
+  device: "mps"
+
+monitoring:
+  golden_set_path: "evaluation/benchmarks/golden_set.json"
+  cusum_slack: 0.02
+  cusum_alert_threshold: 5.0
+
+evaluation:
+  metrics: ["precision@5", "recall@5", "mrr"]
