@@ -21,3 +21,4 @@ RULES FOR THIS PROJECT — NON-NEGOTIABLE
     (chunker, RRF, CUSUM, span alignment) is implemented from scratch — that is
     the point of this project.
 11. Commit after every completed file: `feat(phaseN): <file> — <what it does>`.
+12. If VeritasRAG_Project_Context.md and ANTIGRAVITY_BUILD_GUIDE.md conflict, the GUIDE wins — it contains confirmed corrections (D1–D10) to the context file.

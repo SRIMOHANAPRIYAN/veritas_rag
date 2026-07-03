@@ -3,7 +3,7 @@ name = "veritas-rag"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "sentence-transformers==2.7.0",
+    "sentence-transformers>=3.0",
     "faiss-cpu==1.9.0.post1",
     "rank-bm25==0.2.2",
     "torch>=2.6.0",
