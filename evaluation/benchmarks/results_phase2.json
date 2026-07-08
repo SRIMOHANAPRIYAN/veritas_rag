@@ -1,0 +1,54 @@
+{
+  "gate": "GATE_2",
+  "evaluation_mode": "span",
+  "span_overlap_threshold": 0.5,
+  "index_stats": {
+    "chunk_count": 11791,
+    "doc_count": 212
+  },
+  "configs": [
+    {
+      "label": "hybrid_only",
+      "metrics": {
+        "mrr": 0.6535112327188941,
+        "precision@5": 0.15399999999999978,
+        "recall@5": 0.77
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 3.98
+    },
+    {
+      "label": "zero_shot_reranker",
+      "metrics": {
+        "mrr": 0.8068333333333335,
+        "precision@5": 0.18399999999999966,
+        "recall@5": 0.92
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 45.98
+    },
+    {
+      "label": "finetuned_reranker",
+      "metrics": {
+        "mrr": 0.7294523809523811,
+        "precision@5": 0.16599999999999973,
+        "recall@5": 0.83
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 42.51
+    }
+  ],
+  "gate2_criterion": {
+    "metric": "mrr",
+    "finetuned_minus_zeroshot": -0.0774,
+    "threshold": 0.08,
+    "pass": false
+  },
+  "timestamp": 1783518072.8424199
+}

@@ -1,8 +1,10 @@
 reranker:
   base_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
-  epochs: 3
-  learning_rate: 2.0e-5
+  epochs: 1
+  learning_rate: 1.0e-5
   batch_size: 32
+  msmarco_mix_ratio: 0.9
+  msmarco_sample_size: 18000
   output_dir: "models/reranker/"
 
 nli:

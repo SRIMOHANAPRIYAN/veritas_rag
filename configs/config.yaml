@@ -19,7 +19,9 @@ retriever:
   rrf_k: 60
 
 reranker:
-  model_path: "models/reranker/"
+  mode: "zeroshot"  # zeroshot | finetuned
+  zeroshot_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  finetuned_model: "models/reranker/"
   top_k_reranked: 8
 
 generation:
@@ -43,3 +45,21 @@ evaluation:
   metrics: ["precision@5", "recall@5", "mrr"]
   span_overlap_threshold: 0.5
   span_mode: true
+
+classifier:
+  model_path: "models/query_classifier/"
+  fallback_keywords:
+    comparative:
+      - "compare"
+      - "differ"
+      - "difference"
+      - "vs"
+      - "versus"
+      - "both"
+      - "contrast"
+    multi_hop:
+      - "and what"
+      - "and which"
+      - "and who"
+      - "and where"
+      - "and how"

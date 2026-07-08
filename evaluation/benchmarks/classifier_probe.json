@@ -1,0 +1,199 @@
+{
+  "model_path": "models/query_classifier/",
+  "id2label": {
+    "0": "simple",
+    "1": "multi-hop",
+    "2": "comparative"
+  },
+  "label2id": {
+    "comparative": 2,
+    "multi-hop": 1,
+    "simple": 0
+  },
+  "probe_accuracy": 0.4667,
+  "probe_correct": 7,
+  "probe_total": 15,
+  "probe_results": [
+    {
+      "query": "What is the termination date of the agreement?",
+      "expected": "simple",
+      "predicted": "simple",
+      "confidence": 0.9916,
+      "correct": true,
+      "logits": {
+        "simple": 3.6579,
+        "multi-hop": -1.3772,
+        "comparative": -2.5641
+      }
+    },
+    {
+      "query": "Who is the licensor under this contract?",
+      "expected": "simple",
+      "predicted": "simple",
+      "confidence": 0.9897,
+      "correct": true,
+      "logits": {
+        "simple": 3.6149,
+        "multi-hop": -1.1364,
+        "comparative": -2.7285
+      }
+    },
+    {
+      "query": "What percentage royalty does the supplier receive?",
+      "expected": "simple",
+      "predicted": "simple",
+      "confidence": 0.9915,
+      "correct": true,
+      "logits": {
+        "simple": 3.6548,
+        "multi-hop": -1.3684,
+        "comparative": -2.5642
+      }
+    },
+    {
+      "query": "Where is the registered office of the company?",
+      "expected": "simple",
+      "predicted": "simple",
+      "confidence": 0.9891,
+      "correct": true,
+      "logits": {
+        "simple": 3.5757,
+        "multi-hop": -1.0983,
+        "comparative": -2.7892
+      }
+    },
+    {
+      "query": "What is the governing law for this franchise agreement?",
+      "expected": "simple",
+      "predicted": "simple",
+      "confidence": 0.9901,
+      "correct": true,
+      "logits": {
+        "simple": 3.6152,
+        "multi-hop": -1.1972,
+        "comparative": -2.6911
+      }
+    },
+    {
+      "query": "Who is the CEO of the company that signed the distribution agreement with Acme Corp?",
+      "expected": "multi-hop",
+      "predicted": "multi-hop",
+      "confidence": 0.9816,
+      "correct": true,
+      "logits": {
+        "simple": -1.1481,
+        "multi-hop": 3.1317,
+        "comparative": -2.1912
+      }
+    },
+    {
+      "query": "What is the address of the supplier who provides components mentioned in the maintenance clause?",
+      "expected": "multi-hop",
+      "predicted": "simple",
+      "confidence": 0.9631,
+      "correct": false,
+      "logits": {
+        "simple": 3.0481,
+        "multi-hop": -0.289,
+        "comparative": -2.8561
+      }
+    },
+    {
+      "query": "Which subsidiary executed the IP agreement, and what parent company owns it?",
+      "expected": "multi-hop",
+      "predicted": "simple",
+      "confidence": 0.9745,
+      "correct": false,
+      "logits": {
+        "simple": 3.2013,
+        "multi-hop": -0.5272,
+        "comparative": -2.9236
+      }
+    },
+    {
+      "query": "What warranty terms apply to the product referenced in the supply agreement between the two joint-venture partners?",
+      "expected": "multi-hop",
+      "predicted": "simple",
+      "confidence": 0.9735,
+      "correct": false,
+      "logits": {
+        "simple": 3.2202,
+        "multi-hop": -0.4752,
+        "comparative": -2.8369
+      }
+    },
+    {
+      "query": "Under the hosting agreement, which data center provider is responsible for the uptime SLA, and what penalties apply?",
+      "expected": "multi-hop",
+      "predicted": "simple",
+      "confidence": 0.9659,
+      "correct": false,
+      "logits": {
+        "simple": 3.0077,
+        "multi-hop": -0.4238,
+        "comparative": -2.822
+      }
+    },
+    {
+      "query": "How does the indemnification clause in the 2019 agreement differ from the 2020 amendment?",
+      "expected": "comparative",
+      "predicted": "simple",
+      "confidence": 0.9899,
+      "correct": false,
+      "logits": {
+        "simple": 3.5949,
+        "multi-hop": -1.2303,
+        "comparative": -2.5137
+      }
+    },
+    {
+      "query": "Compare the revenue-sharing terms between the distributor agreement and the reseller agreement.",
+      "expected": "comparative",
+      "predicted": "simple",
+      "confidence": 0.9228,
+      "correct": false,
+      "logits": {
+        "simple": 2.1068,
+        "multi-hop": -1.4682,
+        "comparative": -0.7822
+      }
+    },
+    {
+      "query": "What are the differences in termination rights between the licensor and the licensee?",
+      "expected": "comparative",
+      "predicted": "simple",
+      "confidence": 0.9916,
+      "correct": false,
+      "logits": {
+        "simple": 3.6236,
+        "multi-hop": -1.5251,
+        "comparative": -2.3142
+      }
+    },
+    {
+      "query": "Which agreement offers a longer exclusivity period, the strategic alliance or the joint venture?",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "confidence": 0.9792,
+      "correct": true,
+      "logits": {
+        "simple": -1.2169,
+        "multi-hop": -1.7209,
+        "comparative": 3.1065
+      }
+    },
+    {
+      "query": "What was the revenue in 2019 and how did it compare to the company acquired in 2020?",
+      "expected": "comparative",
+      "predicted": "simple",
+      "confidence": 0.9875,
+      "correct": false,
+      "logits": {
+        "simple": 3.5368,
+        "multi-hop": -0.9968,
+        "comparative": -2.6988
+      }
+    }
+  ],
+  "timestamp": 1783517948.9733472
+}

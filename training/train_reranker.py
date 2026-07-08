@@ -1,77 +1,158 @@
-import os
+"""Train cross-encoder reranker with MS MARCO mixing.
+
+Standalone script for Colab A100. No imports from local state.
+All inputs via CLI args + configs/training_config.yaml.
+
+v2 changes:
+- LR bug fixed: explicitly passed to optimizer_params
+- Epochs: 1 (protect zero-shot priors)
+- MS MARCO mixing: ~90:10 MS MARCO:domain triplets
+"""
+
 import argparse
 import json
 import random
 from pathlib import Path
 
-import torch
-from torch.utils.data import DataLoader
+from datasets import load_dataset
 from sentence_transformers import CrossEncoder, InputExample
-from sentence_transformers.cross_encoder.evaluation import CEBinaryClassificationEvaluator
+from sentence_transformers.cross_encoder.evaluation import (
+    CEBinaryClassificationEvaluator,
+)
+from torch.utils.data import DataLoader
+
 import mlflow
-
 from loguru import logger
-import hydra
-from omegaconf import DictConfig
+from omegaconf import OmegaConf
 
-@hydra.main(version_base=None, config_path="../configs", config_name="training_config")
-def main(cfg: DictConfig):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", type=str, default=cfg.reranker.output_dir, help="Directory to save the trained model")
-    parser.add_argument("--data_dir", type=str, default="data/training", help="Directory containing domain_triplets.jsonl")
-    args, _ = parser.parse_known_args()
-    
-    out_dir = Path(args.output_dir)
+
+def load_domain_triplets(data_dir: Path) -> list[InputExample]:
+    """Load domain triplets from JSONL file."""
+    triplets_path = data_dir / "domain_triplets.jsonl"
+    samples: list[InputExample] = []
+    if not triplets_path.exists():
+        logger.warning(f"Domain triplets not found at {triplets_path}")
+        return samples
+
+    with open(triplets_path, "r") as f:
+        for line in f:
+            data = json.loads(line)
+            samples.append(
+                InputExample(texts=[data["query"], data["positive"]], label=1.0)
+            )
+            samples.append(
+                InputExample(texts=[data["query"], data["negative"]], label=0.0)
+            )
+    logger.info(f"Loaded {len(samples)} domain samples from {triplets_path}")
+    return samples
+
+
+def load_msmarco_samples(sample_size: int, seed: int = 42) -> list[InputExample]:
+    """Download and sample MS MARCO triplets for mixing.
+
+    Uses sentence-transformers/msmarco-msmarco-distilbert-base-tas-b triplet split.
+    """
+    logger.info(f"Downloading MS MARCO training triples (sampling {sample_size})...")
+    ds = load_dataset(
+        "sentence-transformers/msmarco-msmarco-distilbert-base-tas-b",
+        "triplet",
+        split="train",
+    )
+    rng = random.Random(seed)
+    indices = rng.sample(range(len(ds)), min(sample_size, len(ds)))
+
+    samples: list[InputExample] = []
+    for idx in indices:
+        row = ds[idx]
+        samples.append(InputExample(texts=[row["query"], row["positive"]], label=1.0))
+        samples.append(InputExample(texts=[row["query"], row["negative"]], label=0.0))
+    logger.info(f"Loaded {len(samples)} MS MARCO mixing samples")
+    return samples
+
+
+def main() -> None:
+    """Train the cross-encoder reranker."""
+    parser = argparse.ArgumentParser(description="Train cross-encoder reranker")
+    parser.add_argument(
+        "--output_dir", type=str, default=None, help="Override output dir"
+    )
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        default="data/training",
+        help="Directory containing domain_triplets.jsonl",
+    )
+    args = parser.parse_args()
+
+    cfg = OmegaConf.load("configs/training_config.yaml")
+
+    out_dir = Path(args.output_dir or cfg.reranker.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    
-    # MLflow Setup
+
+    # MLflow setup
     mlflow.set_tracking_uri("file://" + str(Path.cwd() / "mlruns"))
     mlflow.set_experiment("VeritasRAG_Reranker")
-    
-    logger.info("Loading CrossEncoder model...")
-    model_name = cfg.reranker.base_model
+
+    model_name: str = cfg.reranker.base_model
+    lr: float = float(cfg.reranker.learning_rate)
+    epochs: int = int(cfg.reranker.epochs)
+    batch_size: int = int(cfg.reranker.batch_size)
+    msmarco_size: int = int(cfg.reranker.msmarco_sample_size)
+    msmarco_ratio: float = float(cfg.reranker.msmarco_mix_ratio)
+
+    logger.info(f"Model: {model_name}")
+    logger.info(f"LR: {lr}, Epochs: {epochs}, Batch: {batch_size}")
+    logger.info(f"MS MARCO mix: {msmarco_ratio:.0%} of {msmarco_size} samples")
+
+    # Load model
     model = CrossEncoder(model_name, num_labels=1)
-    
-    # Prepare data
-    logger.info("Preparing training data...")
-    train_samples = []
-    
-    domain_triplets_path = Path(args.data_dir) / "domain_triplets.jsonl"
-    if domain_triplets_path.exists():
-        with open(domain_triplets_path, "r") as f:
-            for line in f:
-                data = json.loads(line)
-                train_samples.append(InputExample(texts=[data["query"], data["positive"]], label=1.0))
-                train_samples.append(InputExample(texts=[data["query"], data["negative"]], label=0.0))
-    else:
-        logger.warning(f"Domain triplets not found at {domain_triplets_path}")
-        
-    random.shuffle(train_samples)
-    
-    # Split into train/eval (90/10)
-    split_idx = int(len(train_samples) * 0.9)
-    train_data = train_samples[:split_idx]
-    eval_data = train_samples[split_idx:]
-    
+
+    # Load data
+    domain_samples = load_domain_triplets(Path(args.data_dir))
+    msmarco_samples = load_msmarco_samples(msmarco_size)
+
+    # Mix
+    all_samples = domain_samples + msmarco_samples
+    random.shuffle(all_samples)
+
+    logger.info(
+        f"Total training samples: {len(all_samples)} "
+        f"(domain={len(domain_samples)}, msmarco={len(msmarco_samples)})"
+    )
+
+    # Split 90/10
+    split_idx = int(len(all_samples) * 0.9)
+    train_data = all_samples[:split_idx]
+    eval_data = all_samples[split_idx:]
+
     if not train_data:
-        logger.error("No training data available. Run generate_training_data.py first.")
+        logger.error("No training data. Run generate_training_data.py first.")
         return
-        
-    train_dataloader = DataLoader(train_data, shuffle=True, batch_size=cfg.reranker.batch_size)
-    evaluator = CEBinaryClassificationEvaluator.from_input_examples(eval_data, name="domain-eval")
-    
-    epochs = cfg.reranker.epochs
+
+    train_dataloader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+    evaluator = CEBinaryClassificationEvaluator.from_input_examples(
+        eval_data, name="mixed-eval"
+    )
+
     warmup_steps = int(len(train_dataloader) * epochs * 0.1)
-    
+
     with mlflow.start_run():
-        mlflow.log_params({
-            "model": model_name,
-            "epochs": epochs,
-            "batch_size": cfg.reranker.batch_size,
-            "learning_rate": cfg.reranker.learning_rate,
-            "train_samples": len(train_data),
-        })
-        
+        mlflow.log_params(
+            {
+                "model": model_name,
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "learning_rate": lr,
+                "train_samples_total": len(train_data),
+                "domain_samples": len(domain_samples),
+                "msmarco_dataset": "sentence-transformers/msmarco-msmarco-distilbert-base-tas-b",
+                "msmarco_samples": len(msmarco_samples),
+                "msmarco_mix_ratio": msmarco_ratio,
+                "msmarco_sample_size": msmarco_size,
+                "version": "v2",
+            }
+        )
+
         logger.info("Starting training...")
         model.fit(
             train_dataloader=train_dataloader,
@@ -80,12 +161,13 @@ def main(cfg: DictConfig):
             evaluation_steps=1000,
             warmup_steps=warmup_steps,
             output_path=str(out_dir),
-            optimizer_params={'lr': cfg.reranker.learning_rate},
-            show_progress_bar=True
+            optimizer_params={"lr": lr},
+            show_progress_bar=True,
         )
-        
+
         logger.info(f"Training complete. Model saved to {out_dir}")
         model.save(str(out_dir))
+
 
 if __name__ == "__main__":
     main()
