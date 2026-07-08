@@ -1,6 +1,7 @@
 """Run full ingestion pipeline."""
 
 import os
+import sys
 from pathlib import Path
 import hashlib
 import json
@@ -16,6 +17,10 @@ from src.ingestion.indexer import Indexer
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg: DictConfig):
+    import torch
+    logger.info(f"Interpreter: {sys.prefix}")
+    logger.info(f"Torch version: {torch.__version__}")
+
     config_dict = OmegaConf.to_container(cfg.chunker, resolve=True)
     config_str = json.dumps(config_dict, sort_keys=True)
     chunker_config_hash = hashlib.sha256(config_str.encode()).hexdigest()

@@ -49,6 +49,8 @@ def test_table_atomicity(mock_model):
             heading_path=[],
             is_table=True,
             source_path="test.pdf",
+            char_start=0,
+            char_end=31,
         )
     ]
 
@@ -69,6 +71,8 @@ def test_min_max_token_invariants(mock_model):
             heading_path=[],
             is_table=False,
             source_path="test.txt",
+            char_start=0,
+            char_end=390,
         )
     ]
 
@@ -89,6 +93,8 @@ def test_cosine_boundary_logic(mock_model):
             heading_path=[],
             is_table=False,
             source_path="test.txt",
+            char_start=0,
+            char_end=61,
         )
     ]
 
@@ -97,6 +103,36 @@ def test_cosine_boundary_logic(mock_model):
     assert len(chunks) == 2
     assert chunks[0].text == "I like apple. Apple is good."
     assert chunks[1].text == "I like banana. Banana is yellow."
+
+
+@pytest.mark.local_model
+def test_continuous_stream_min_tokens():
+    """Test that streaming sentences across blocks respects min_tokens."""
+    chunker = SemanticChunker("all-mpnet-base-v2", 0.5, 10, 50, 32, device="cpu")
+    # Provide dummy blocks
+    blocks = []
+    # Create 50 blocks of 5 tokens each
+    for i in range(50):
+        blocks.append(
+            ParsedBlock(
+                text="This is a test sentence.",
+                page=1,
+                heading_path=[],
+                is_table=False,
+                source_path="test.txt",
+                char_start=i * 25,
+                char_end=i * 25 + 24,
+            )
+        )
+    
+    chunks = chunker.chunk_document("doc1", blocks)
+    
+    # Check that less than 5% of chunks are under min_tokens (10)
+    # The last chunk might be under min_tokens if it couldn't merge without exceeding max_tokens,
+    # but the logic tries to merge.
+    under_min = [c for c in chunks if c.token_count < 10]
+    
+    assert len(under_min) / max(1, len(chunks)) < 0.05
 
 
 @pytest.mark.local_model

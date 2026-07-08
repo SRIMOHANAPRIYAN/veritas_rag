@@ -41,3 +41,5 @@ monitoring:
 
 evaluation:
   metrics: ["precision@5", "recall@5", "mrr"]
+  span_overlap_threshold: 0.5
+  span_mode: true

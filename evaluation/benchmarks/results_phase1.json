@@ -1,0 +1,27 @@
+{
+  "mode": "span",
+  "overlap_threshold": 0.5,
+  "semantic_chunking": {
+    "metrics": {
+      "mrr": 0.6535112327188941,
+      "precision@5": 0.15399999999999978,
+      "recall@5": 0.77
+    },
+    "span_collision_count": 0,
+    "skipped_queries": 0,
+    "effective_queries": 100,
+    "evaluation_time_seconds": 3.8740580081939697
+  },
+  "fixed_512_chunking": {
+    "metrics": {
+      "mrr": 0.5752322931611727,
+      "precision@5": 0.1479999999999998,
+      "recall@5": 0.74
+    },
+    "span_collision_count": 0,
+    "skipped_queries": 0,
+    "effective_queries": 100,
+    "evaluation_time_seconds": 2.0769240856170654
+  },
+  "timestamp": 1783409248.1509912
+}

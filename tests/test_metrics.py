@@ -37,8 +37,8 @@ def test_evaluate_retriever(tmp_path):
         data = json.load(f)
 
     data["queries"] = [
-        {"query": "q1", "relevant_doc_ids": ["doc2", "doc4"]},
-        {"query": "q2", "relevant_doc_ids": ["doc1"]},
+        {"query": "q1", "relevant_chunk_ids": ["c2", "c4"]},
+        {"query": "q2", "relevant_chunk_ids": ["c1"]}
     ]
     with open(golden_path, "w") as f:
         json.dump(data, f)

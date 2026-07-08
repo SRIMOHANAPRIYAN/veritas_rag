@@ -22,3 +22,5 @@ RULES FOR THIS PROJECT — NON-NEGOTIABLE
     the point of this project.
 11. Commit after every completed file: `feat(phaseN): <file> — <what it does>`.
 12. If VeritasRAG_Project_Context.md and ANTIGRAVITY_BUILD_GUIDE.md conflict, the GUIDE wins — it contains confirmed corrections (D1–D10) to the context file.
+
+13. Benchmark/result files may ONLY be created by executing the evaluation code. Reporting numbers that were not produced by a real run is a critical failure.

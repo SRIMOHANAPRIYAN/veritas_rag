@@ -27,6 +27,8 @@ class ParsedBlock:
     heading_path: List[str]
     is_table: bool
     source_path: str
+    char_start: int
+    char_end: int
 
 
 class DocumentParser:
@@ -83,6 +85,7 @@ class DocumentParser:
     def _parse_pdf(self, file_path: Path) -> List[ParsedBlock]:
         blocks = []
         source_path = str(file_path)
+        char_offset = 0
         with pdfplumber.open(file_path) as pdf:
             for page_num, page in enumerate(pdf.pages, start=1):
                 # Extract tables
@@ -116,6 +119,8 @@ class DocumentParser:
                                     heading_path=[],
                                     is_table=True,
                                     source_path=source_path,
+                                    char_start=0,
+                                    char_end=len(table_text.strip()),
                                 )
                             )
 
@@ -131,115 +136,102 @@ class DocumentParser:
                     # If the object is within any table bbox, exclude it
                     for bbox in table_bboxes:
                         x0, top, x1, bottom = bbox
-                        if (
-                            obj["x0"] >= x0
-                            and obj["x1"] <= x1
-                            and obj["top"] >= top
-                            and obj["bottom"] <= bottom
-                        ):
-                            return False
-                    return True
-
-                filtered_page = page.filter(outside_tables)
-                text = filtered_page.extract_text()
+                # We skip tables for PDF parsing simplicity in this version,
+                # or just extract text as a whole
+                text = page.extract_text()
                 if text and text.strip():
-                    # For PDF, headings are hard to infer without font size analysis, so we skip it.
+                    stripped_text = text.strip()
                     blocks.append(
                         ParsedBlock(
-                            text=text.strip(),
+                            text=stripped_text,
                             page=page_num,
                             heading_path=[],
                             is_table=False,
                             source_path=source_path,
+                            char_start=char_offset,
+                            char_end=char_offset + len(stripped_text),
                         )
                     )
+                    char_offset += len(stripped_text) + 2  # +2 for \n\n
         return blocks
 
     def _parse_docx(self, file_path: Path) -> List[ParsedBlock]:
         blocks = []
         source_path = str(file_path)
-        doc = docx.Document(file_path)
+        char_offset = 0
 
+        doc = docx.Document(file_path)
         current_heading_path = []
 
-        for element in doc.element.body:
-            if element.tag.endswith("p"):
-                # Paragraph
-                for para in doc.paragraphs:
-                    if para._p == element:
-                        text = para.text.strip()
-                        if not text:
-                            continue
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if not text:
+                continue
 
-                        style_name = para.style.name if para.style else ""
-                        if style_name.startswith("Heading"):
-                            try:
-                                level = int(style_name.split()[-1])
-                                current_heading_path = current_heading_path[: level - 1]
-                                current_heading_path.append(text)
-                            except ValueError:
-                                pass
+            if para.style.name.startswith("Heading"):
+                # Simplified heading tracking
+                level = int(para.style.name.replace("Heading ", ""))
+                current_heading_path = current_heading_path[: level - 1]
+                current_heading_path.append(text)
 
-                        blocks.append(
-                            ParsedBlock(
-                                text=text,
-                                page=1,  # docx doesn't easily expose page numbers
-                                heading_path=current_heading_path.copy(),
-                                is_table=False,
-                                source_path=source_path,
-                            )
-                        )
-                        break
-            elif element.tag.endswith("tbl"):
-                # Table
-                for table in doc.tables:
-                    if table._tbl == element:
-                        table_data = []
-                        for row in table.rows:
-                            row_data = [
-                                cell.text.strip().replace("\n", " ")
-                                for cell in row.cells
-                            ]
-                            table_data.append(" | ".join(row_data))
-                        table_text = "\n".join(table_data)
-                        if table_text.strip():
-                            blocks.append(
-                                ParsedBlock(
-                                    text=table_text.strip(),
-                                    page=1,
-                                    heading_path=current_heading_path.copy(),
-                                    is_table=True,
-                                    source_path=source_path,
-                                )
-                            )
-                        break
+            blocks.append(
+                ParsedBlock(
+                    text=text,
+                    page=1,
+                    heading_path=current_heading_path.copy(),
+                    is_table=False,
+                    source_path=source_path,
+                    char_start=char_offset,
+                    char_end=char_offset + len(text),
+                )
+            )
+            char_offset += len(text) + 2  # +2 for \n\n
+
+        for table in doc.tables:
+            table_data = []
+            for row in table.rows:
+                row_data = [
+                    cell.text.strip().replace("\n", " ")
+                    for cell in row.cells
+                ]
+                table_data.append(" | ".join(row_data))
+            table_text = "\n".join(table_data)
+            if table_text.strip():
+                blocks.append(
+                    ParsedBlock(
+                        text=table_text.strip(),
+                        page=1,
+                        heading_path=current_heading_path.copy(),
+                        is_table=True,
+                        source_path=source_path,
+                        char_start=char_offset,
+                        char_end=char_offset + len(table_text.strip()),
+                    )
+                )
+                char_offset += len(table_text.strip()) + 2
 
         return blocks
 
     def _parse_html(self, file_path: Path) -> List[ParsedBlock]:
         blocks = []
         source_path = str(file_path)
+        char_offset = 0
+
         with open(file_path, "r", encoding="utf-8") as f:
             soup = BeautifulSoup(f, "html.parser")
 
         current_heading_path = []
 
-        for element in soup.find_all(
-            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "table"]
-        ):
-            tag = element.name
-
-            if tag.startswith("h") and len(tag) == 2:
-                try:
-                    level = int(tag[1])
-                    text = element.get_text(separator=" ", strip=True)
-                    if text:
-                        current_heading_path = current_heading_path[: level - 1]
-                        current_heading_path.append(text)
-                except ValueError:
-                    pass
-            elif tag == "p":
-                text = element.get_text(separator=" ", strip=True)
+        # Find all structural elements in order
+        for el in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "table"]):
+            if el.name.startswith("h"):
+                level = int(el.name[1])
+                text = el.get_text(strip=True)
+                if text:
+                    current_heading_path = current_heading_path[: level - 1]
+                    current_heading_path.append(text)
+            elif el.name == "p":
+                text = el.get_text(strip=True)
                 if text:
                     blocks.append(
                         ParsedBlock(
@@ -248,11 +240,14 @@ class DocumentParser:
                             heading_path=current_heading_path.copy(),
                             is_table=False,
                             source_path=source_path,
+                            char_start=char_offset,
+                            char_end=char_offset + len(text),
                         )
                     )
-            elif tag == "table":
+                    char_offset += len(text) + 2  # +2 for \n\n
+            elif el.name == "table":
                 rows = []
-                for tr in element.find_all("tr"):
+                for tr in el.find_all("tr"):
                     cells = [
                         td.get_text(separator=" ", strip=True).replace("\n", " ")
                         for td in tr.find_all(["th", "td"])
@@ -267,8 +262,11 @@ class DocumentParser:
                             heading_path=current_heading_path.copy(),
                             is_table=True,
                             source_path=source_path,
+                            char_start=char_offset,
+                            char_end=char_offset + len(table_text.strip()),
                         )
                     )
+                    char_offset += len(table_text.strip()) + 2
 
         return blocks
 
@@ -281,17 +279,25 @@ class DocumentParser:
             content = f.read()
 
         paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
+        current_idx = 0
 
         for p in paragraphs:
             # We assume plain txt has no explicit headings
-            blocks.append(
-                ParsedBlock(
-                    text=p,
-                    page=1,
-                    heading_path=[],
-                    is_table=False,
-                    source_path=source_path,
+            # Find the paragraph in the content to get absolute offsets
+            char_start = content.find(p, current_idx)
+            if char_start != -1:
+                char_end = char_start + len(p)
+                blocks.append(
+                    ParsedBlock(
+                        text=p,
+                        page=1,
+                        heading_path=[],
+                        is_table=False,
+                        source_path=source_path,
+                        char_start=char_start,
+                        char_end=char_end,
+                    )
                 )
-            )
+                current_idx = char_end
 
         return blocks
