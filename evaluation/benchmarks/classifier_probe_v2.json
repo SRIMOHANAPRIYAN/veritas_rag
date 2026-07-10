@@ -1,0 +1,229 @@
+{
+  "model_path": "models/query_classifier_v2/",
+  "id2label": {
+    "0": "simple",
+    "1": "multi-hop",
+    "2": "comparative"
+  },
+  "label2id": {
+    "comparative": 2,
+    "multi-hop": 1,
+    "simple": 0
+  },
+  "probe_accuracy": 0.9333,
+  "probe_correct": 14,
+  "probe_total": 15,
+  "probe_results": [
+    {
+      "query": "What is the governing law for the supply agreement?",
+      "expected": "simple",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.9937,
+      "correct": true,
+      "logits": {
+        "simple": 3.6852,
+        "multi-hop": -1.7672,
+        "comparative": -2.5222
+      }
+    },
+    {
+      "query": "How many days are given to cure a material breach?",
+      "expected": "simple",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.9938,
+      "correct": true,
+      "logits": {
+        "simple": 3.6744,
+        "multi-hop": -1.8217,
+        "comparative": -2.4602
+      }
+    },
+    {
+      "query": "Who is the primary contact for notices sent to the vendor?",
+      "expected": "simple",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.9936,
+      "correct": true,
+      "logits": {
+        "simple": 3.6965,
+        "multi-hop": -1.6531,
+        "comparative": -2.6631
+      }
+    },
+    {
+      "query": "Is there a force majeure clause in this contract?",
+      "expected": "simple",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.985,
+      "correct": true,
+      "logits": {
+        "simple": 3.3107,
+        "multi-hop": -1.0293,
+        "comparative": -2.79
+      }
+    },
+    {
+      "query": "What is the expiration date of the non-compete period?",
+      "expected": "simple",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.9937,
+      "correct": true,
+      "logits": {
+        "simple": 3.7229,
+        "multi-hop": -1.6417,
+        "comparative": -2.6725
+      }
+    },
+    {
+      "query": "If the supplier delays delivery, which section dictates the penalty and how does that affect the payment schedule?",
+      "expected": "multi-hop",
+      "predicted": "multi-hop",
+      "raw_model_predicted": "simple",
+      "fallback_applied": true,
+      "confidence": 0.9702,
+      "correct": true,
+      "logits": {
+        "simple": 3.0355,
+        "multi-hop": -0.5281,
+        "comparative": -2.9859
+      }
+    },
+    {
+      "query": "Under the master services agreement, who owns the intellectual property created by the contractor, and do they have sublicensing rights?",
+      "expected": "multi-hop",
+      "predicted": "multi-hop",
+      "raw_model_predicted": "multi-hop",
+      "fallback_applied": false,
+      "confidence": 0.9967,
+      "correct": true,
+      "logits": {
+        "simple": -2.2093,
+        "multi-hop": 4.0984,
+        "comparative": -2.4075
+      }
+    },
+    {
+      "query": "What happens to the confidentiality obligations if the agreement is terminated early due to insolvency?",
+      "expected": "multi-hop",
+      "predicted": "simple",
+      "raw_model_predicted": "simple",
+      "fallback_applied": false,
+      "confidence": 0.9503,
+      "correct": false,
+      "logits": {
+        "simple": 2.7886,
+        "multi-hop": -0.2153,
+        "comparative": -3.1176
+      }
+    },
+    {
+      "query": "Who is responsible for the insurance coverage of the leased equipment, and what is the minimum liability limit required?",
+      "expected": "multi-hop",
+      "predicted": "multi-hop",
+      "raw_model_predicted": "simple",
+      "fallback_applied": true,
+      "confidence": 0.9613,
+      "correct": true,
+      "logits": {
+        "simple": 2.9311,
+        "multi-hop": -0.3453,
+        "comparative": -3.0509
+      }
+    },
+    {
+      "query": "Under the data protection addendum, how quickly must the vendor report a data breach, and to which regulatory body?",
+      "expected": "multi-hop",
+      "predicted": "multi-hop",
+      "raw_model_predicted": "multi-hop",
+      "fallback_applied": false,
+      "confidence": 0.9806,
+      "correct": true,
+      "logits": {
+        "simple": -0.7891,
+        "multi-hop": 3.2363,
+        "comparative": -2.9912
+      }
+    },
+    {
+      "query": "How does the limitation of liability in the 2021 contract differ from the 2023 renewal?",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "raw_model_predicted": "simple",
+      "fallback_applied": true,
+      "confidence": 0.9823,
+      "correct": true,
+      "logits": {
+        "simple": 3.0303,
+        "multi-hop": -1.4203,
+        "comparative": -2.0324
+      }
+    },
+    {
+      "query": "Compare the indemnification requirements between the software license and the hardware purchase agreement.",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "raw_model_predicted": "comparative",
+      "fallback_applied": false,
+      "confidence": 0.9712,
+      "correct": true,
+      "logits": {
+        "simple": -1.0721,
+        "multi-hop": -1.9074,
+        "comparative": 2.8052
+      }
+    },
+    {
+      "query": "What are the differences in termination for convenience rights between Party A and Party B?",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "raw_model_predicted": "simple",
+      "fallback_applied": true,
+      "confidence": 0.9907,
+      "correct": true,
+      "logits": {
+        "simple": 3.4417,
+        "multi-hop": -1.6186,
+        "comparative": -2.3477
+      }
+    },
+    {
+      "query": "Which contract provides a longer warranty period, the standard terms or the enterprise amendment?",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "raw_model_predicted": "comparative",
+      "fallback_applied": false,
+      "confidence": 0.9796,
+      "correct": true,
+      "logits": {
+        "simple": -1.3128,
+        "multi-hop": -1.8408,
+        "comparative": 3.0228
+      }
+    },
+    {
+      "query": "Contrast the governing law provisions in the European distribution agreement versus the North American one.",
+      "expected": "comparative",
+      "predicted": "comparative",
+      "raw_model_predicted": "comparative",
+      "fallback_applied": false,
+      "confidence": 0.9527,
+      "correct": true,
+      "logits": {
+        "simple": -0.6666,
+        "multi-hop": -2.113,
+        "comparative": 2.548
+      }
+    }
+  ],
+  "timestamp": 1783578276.596174
+}

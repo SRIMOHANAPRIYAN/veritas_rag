@@ -1,0 +1,17 @@
+[
+  {"query": "What is the governing law for the supply agreement?", "expected": "simple"},
+  {"query": "How many days are given to cure a material breach?", "expected": "simple"},
+  {"query": "Who is the primary contact for notices sent to the vendor?", "expected": "simple"},
+  {"query": "Is there a force majeure clause in this contract?", "expected": "simple"},
+  {"query": "What is the expiration date of the non-compete period?", "expected": "simple"},
+  {"query": "If the supplier delays delivery, which section dictates the penalty and how does that affect the payment schedule?", "expected": "multi-hop"},
+  {"query": "Under the master services agreement, who owns the intellectual property created by the contractor, and do they have sublicensing rights?", "expected": "multi-hop"},
+  {"query": "What happens to the confidentiality obligations if the agreement is terminated early due to insolvency?", "expected": "multi-hop"},
+  {"query": "Who is responsible for the insurance coverage of the leased equipment, and what is the minimum liability limit required?", "expected": "multi-hop"},
+  {"query": "Under the data protection addendum, how quickly must the vendor report a data breach, and to which regulatory body?", "expected": "multi-hop"},
+  {"query": "How does the limitation of liability in the 2021 contract differ from the 2023 renewal?", "expected": "comparative"},
+  {"query": "Compare the indemnification requirements between the software license and the hardware purchase agreement.", "expected": "comparative"},
+  {"query": "What are the differences in termination for convenience rights between Party A and Party B?", "expected": "comparative"},
+  {"query": "Which contract provides a longer warranty period, the standard terms or the enterprise amendment?", "expected": "comparative"},
+  {"query": "Contrast the governing law provisions in the European distribution agreement versus the North American one.", "expected": "comparative"}
+]

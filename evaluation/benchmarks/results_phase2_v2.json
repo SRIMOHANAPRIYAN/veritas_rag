@@ -1,0 +1,66 @@
+{
+  "gate": "GATE_2_V2",
+  "evaluation_mode": "span",
+  "span_overlap_threshold": 0.5,
+  "index_stats": {
+    "chunk_count": 11791,
+    "doc_count": 212
+  },
+  "configs": [
+    {
+      "label": "hybrid_only",
+      "metrics": {
+        "mrr": 0.6535112327188941,
+        "precision@5": 0.15399999999999978,
+        "recall@5": 0.77
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 4.05
+    },
+    {
+      "label": "zero_shot_reranker",
+      "metrics": {
+        "mrr": 0.8068333333333335,
+        "precision@5": 0.18399999999999966,
+        "recall@5": 0.92
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 46.05
+    },
+    {
+      "label": "finetuned_reranker_v1",
+      "metrics": {
+        "mrr": 0.7294523809523811,
+        "precision@5": 0.16599999999999973,
+        "recall@5": 0.83
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 42.75
+    },
+    {
+      "label": "finetuned_reranker_v2",
+      "metrics": {
+        "mrr": 0.7140952380952382,
+        "precision@5": 0.17599999999999968,
+        "recall@5": 0.88
+      },
+      "span_collision_count": 0,
+      "skipped_queries": 0,
+      "effective_queries": 100,
+      "wall_time_seconds": 42.47
+    }
+  ],
+  "gate2_criterion": {
+    "metric": "mrr",
+    "finetuned_v2_minus_zeroshot": -0.0927,
+    "threshold": 0.0,
+    "pass": false
+  },
+  "timestamp": 1783578368.284008
+}

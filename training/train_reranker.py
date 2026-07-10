@@ -9,7 +9,7 @@ v2 changes:
 - MS MARCO mixing: ~90:10 MS MARCO:domain triplets
 """
 
-import argparse
+import sys
 import json
 import random
 from pathlib import Path
@@ -72,25 +72,18 @@ def load_msmarco_samples(sample_size: int, seed: int = 42) -> list[InputExample]
 
 def main() -> None:
     """Train the cross-encoder reranker."""
-    parser = argparse.ArgumentParser(description="Train cross-encoder reranker")
-    parser.add_argument(
-        "--output_dir", type=str, default=None, help="Override output dir"
-    )
-    parser.add_argument(
-        "--data_dir",
-        type=str,
-        default="data/training",
-        help="Directory containing domain_triplets.jsonl",
-    )
-    args = parser.parse_args()
-
     cfg = OmegaConf.load("configs/training_config.yaml")
+    cli_cfg = OmegaConf.from_cli(sys.argv[1:])
+    cfg = OmegaConf.merge(cfg, cli_cfg)
+    
+    dry_run = cfg.get("dry_run", False)
 
-    out_dir = Path(args.output_dir or cfg.reranker.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(cfg.reranker.output_dir)
+    if not dry_run:
+        out_dir.mkdir(parents=True, exist_ok=True)
 
     # MLflow setup
-    mlflow.set_tracking_uri("file://" + str(Path.cwd() / "mlruns"))
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment("VeritasRAG_Reranker")
 
     model_name: str = cfg.reranker.base_model
@@ -105,10 +98,12 @@ def main() -> None:
     logger.info(f"MS MARCO mix: {msmarco_ratio:.0%} of {msmarco_size} samples")
 
     # Load model
-    model = CrossEncoder(model_name, num_labels=1)
+    device = "cpu" if dry_run else None
+    model = CrossEncoder(model_name, num_labels=1, device=device)
 
     # Load data
-    domain_samples = load_domain_triplets(Path(args.data_dir))
+    data_dir = cfg.get("data_dir", "data/training")
+    domain_samples = load_domain_triplets(Path(data_dir))
     msmarco_samples = load_msmarco_samples(msmarco_size)
 
     # Mix
@@ -124,6 +119,12 @@ def main() -> None:
     split_idx = int(len(all_samples) * 0.9)
     train_data = all_samples[:split_idx]
     eval_data = all_samples[split_idx:]
+    
+    if dry_run:
+        logger.info("DRY RUN: Limiting to 3 samples")
+        train_data = train_data[:3]
+        eval_data = eval_data[:3]
+        epochs = 1
 
     if not train_data:
         logger.error("No training data. Run generate_training_data.py first.")
@@ -148,25 +149,27 @@ def main() -> None:
                 "msmarco_dataset": "sentence-transformers/msmarco-msmarco-distilbert-base-tas-b",
                 "msmarco_samples": len(msmarco_samples),
                 "msmarco_mix_ratio": msmarco_ratio,
-                "msmarco_sample_size": msmarco_size,
                 "version": "v2",
             }
         )
 
         logger.info("Starting training...")
+        # CrossEncoder doesn't support report_to natively, but it doesn't log to WANDB unless explicitly configured.
         model.fit(
             train_dataloader=train_dataloader,
             evaluator=evaluator,
             epochs=epochs,
-            evaluation_steps=1000,
+            evaluation_steps=1000 if not dry_run else 1,
             warmup_steps=warmup_steps,
-            output_path=str(out_dir),
+            output_path=str(out_dir) if not dry_run else None,
             optimizer_params={"lr": lr},
             show_progress_bar=True,
+            save_best_model=not dry_run,
         )
 
-        logger.info(f"Training complete. Model saved to {out_dir}")
-        model.save(str(out_dir))
+        if not dry_run:
+            logger.info(f"Training complete. Model saved to {out_dir}")
+            model.save(str(out_dir))
 
 
 if __name__ == "__main__":

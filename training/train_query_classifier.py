@@ -1,5 +1,5 @@
 import os
-import argparse
+import sys
 import json
 from pathlib import Path
 import numpy as np
@@ -53,29 +53,19 @@ def compute_metrics(eval_pred):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default="models/query_classifier/",
-        help="Directory to save the trained model",
-    )
-    parser.add_argument(
-        "--data_dir",
-        type=str,
-        default="data/training",
-        help="Directory containing query_classifier_data_v2.jsonl",
-    )
-    args = parser.parse_args()
-
     cfg = OmegaConf.load("configs/training_config.yaml")
+    cli_cfg = OmegaConf.from_cli(sys.argv[1:])
+    cfg = OmegaConf.merge(cfg, cli_cfg)
+    
+    dry_run = cfg.get("dry_run", False)
 
-    out_dir = Path(args.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(cfg.classifier.output_dir)
+    if not dry_run:
+        out_dir.mkdir(parents=True, exist_ok=True)
 
     # MLflow Setup
-    mlflow.set_tracking_uri("file://" + str(Path.cwd() / "mlruns"))
-    os.environ["MLFLOW_EXPERIMENT_NAME"] = "VeritasRAG_QueryClassifier"
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_experiment("VeritasRAG_QueryClassifier")
 
     model_name = cfg.classifier.base_model
     logger.info(f"Loading {model_name}...")
@@ -89,11 +79,10 @@ def main():
     )
 
     # Load dataset
-    data_path = Path(args.data_dir) / "query_classifier_data_v2.jsonl"
+    data_dir = cfg.get("data_dir", "data/training")
+    data_path = Path(data_dir) / "query_classifier_data_v2.jsonl"
     if not data_path.exists():
-        logger.error(
-            f"Data not found at {data_path}. Run generate_training_data.py first."
-        )
+        logger.error(f"Data not found at {data_path}. Run generate_training_data.py first.")
         return
 
     dataset = QueryDataset(data_path, tokenizer)
@@ -105,21 +94,28 @@ def main():
     train_dataset, eval_dataset = torch.utils.data.random_split(
         dataset, [train_size, eval_size], generator=generator
     )
+    
+    if dry_run:
+        logger.info("DRY RUN: Limiting to 3 samples")
+        train_dataset = torch.utils.data.Subset(train_dataset, range(min(3, len(train_dataset))))
+        eval_dataset = torch.utils.data.Subset(eval_dataset, range(min(3, len(eval_dataset))))
+        cfg.classifier.epochs = 1
 
-    logger.info(f"Train size: {train_size}, Eval size: {eval_size}")
+    logger.info(f"Train size: {len(train_dataset)}, Eval size: {len(eval_dataset)}")
 
     training_args = TrainingArguments(
         output_dir=str(out_dir),
         eval_strategy="epoch",
-        save_strategy="epoch",
+        save_strategy="epoch" if not dry_run else "no",
         learning_rate=cfg.classifier.learning_rate,
         per_device_train_batch_size=cfg.classifier.batch_size,
         per_device_eval_batch_size=cfg.classifier.batch_size,
         num_train_epochs=cfg.classifier.epochs,
         weight_decay=0.01,
-        load_best_model_at_end=True,
-        metric_for_best_model="f1",
+        load_best_model_at_end=not dry_run,
+        metric_for_best_model="f1" if not dry_run else None,
         report_to="none",
+        use_cpu=dry_run,
     )
 
     trainer = Trainer(
@@ -127,15 +123,26 @@ def main():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         compute_metrics=compute_metrics,
     )
 
-    logger.info("Starting training...")
-    trainer.train()
+    with mlflow.start_run():
+        mlflow.log_params(
+            {
+                "model": model_name,
+                "epochs": cfg.classifier.epochs,
+                "batch_size": cfg.classifier.batch_size,
+                "learning_rate": cfg.classifier.learning_rate,
+                "train_samples": len(train_dataset),
+            }
+        )
+        logger.info("Starting training...")
+        trainer.train()
 
-    logger.info(f"Saving final model to {out_dir}")
-    trainer.save_model(str(out_dir))
+        if not dry_run:
+            logger.info(f"Saving final model to {out_dir}")
+            trainer.save_model(str(out_dir))
 
 
 if __name__ == "__main__":

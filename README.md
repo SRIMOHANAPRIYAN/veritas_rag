@@ -19,7 +19,8 @@ Self-Auditing RAG with Explainable Evidence Grounding.
 - `torch` & `transformers`: Bumped to `>=2.6.0` and `>=4.40.2` respectively due to Python 3.13 dropping support for older `torch` versions.
 - `spacy`: Bumped from `3.7.4` to `>=3.8.0` due to Cython/GIL compatibility issues on Python 3.13.
 - `numpy`, `streamlit`, `mlflow`, `duckdb`, & `pydantic`: Bumped to `>=` versions due to C-extension build issues and transitive dependency conflicts on Python 3.13.
-
+- **LLaMA 3.1 8B Setup**: Place `llama31-8b-q4.gguf` at `models/llm/` (see config). `llama-cpp-python` is installed via `CMAKE_ARGS="-DLLAMA_METAL=on" pip install -e ".[dev]"`.
+- **Zero-shot NLI Verifier**: The guide specifies `deberta-v3-base-mnli` for Phase 3, but we use `cross-encoder/nli-deberta-v3-base` (which is actually trained on MNLI) as the zero-shot NLIScorer.
 ### Data Acquisition
 
 The corpus is a 212-document subset of the CUAD (Contract Understanding Attainment Dataset). Raw data acquisition is scripted:
@@ -33,6 +34,12 @@ python scripts/restore_corpus_from_db.py
 ```
 
 Corpus size: **212 documents** (Frozen as Corpus v2.0 in `data/corpus_manifest.json`).
+
+## Phase 2 Evaluation
+
+- **Zero-shot reranker adopted**: The zero-shot `cross-encoder/ms-marco-MiniLM-L-6-v2` model is the active pipeline reranker. It achieved an MRR of 0.807, a +0.153 improvement over the hybrid baseline.
+- **Reranker fine-tune logged as negative result**: The v2 fine-tuned model (MRR 0.714) underperformed the zero-shot baseline and is treated as a documented negative result.
+- **Classifier v2 approved**: The v2 Query Classifier + rule-based keyword fallback achieved 14/15 accuracy on the Gate 2 probe and is active.
 
 ## Incidents
 

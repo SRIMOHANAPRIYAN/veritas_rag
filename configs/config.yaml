@@ -27,6 +27,7 @@ reranker:
 generation:
   model_path: "models/llm/llama31-8b-q4.gguf"
   device: "mps"                   # M5 Mac GPU via Metal
+  n_ctx: 8192
   max_tokens: 512
   temperature: 0.0
 
