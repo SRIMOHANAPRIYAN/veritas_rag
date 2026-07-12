@@ -22,8 +22,9 @@ from sentence_transformers.cross_encoder.evaluation import (
 from torch.utils.data import DataLoader
 
 import mlflow
+import hydra
 from loguru import logger
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
 
 def load_domain_triplets(data_dir: Path) -> list[InputExample]:
@@ -70,11 +71,9 @@ def load_msmarco_samples(sample_size: int, seed: int = 42) -> list[InputExample]
     return samples
 
 
-def main() -> None:
+@hydra.main(version_base=None, config_path="../configs", config_name="training_config")
+def main(cfg: DictConfig) -> None:
     """Train the cross-encoder reranker."""
-    cfg = OmegaConf.load("configs/training_config.yaml")
-    cli_cfg = OmegaConf.from_cli(sys.argv[1:])
-    cfg = OmegaConf.merge(cfg, cli_cfg)
     
     dry_run = cfg.get("dry_run", False)
 

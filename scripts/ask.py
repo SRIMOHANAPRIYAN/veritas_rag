@@ -14,13 +14,20 @@ from src.generation.llm_client import LlamaClient
 from src.generation.prompt_templates import GENERATION_PROMPT
 
 async def async_main():
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/ask.py 'Your query here'")
+    if "--warm-check" in sys.argv:
+        warm_check = True
+        sys.argv.remove("--warm-check")
+    else:
+        warm_check = False
+        
+    if len(sys.argv) < 2 and not warm_check:
+        print("Usage: python scripts/ask.py [--warm-check] 'Your query here'")
         sys.exit(1)
         
-    query = " ".join(sys.argv[1:])
+    query = " ".join(sys.argv[1:]) if not warm_check else ""
     
-    logger.info(f"Query: {query}")
+    if not warm_check:
+        logger.info(f"Query: {query}")
     
     start_time = time.time()
     
@@ -30,6 +37,11 @@ async def async_main():
     reranker = registry.get_reranker()
     assembler = ContextAssembler()
     llm = LlamaClient()
+    
+    if warm_check:
+        logger.info("Warm check complete. Models are loaded.")
+        print("\n[WARM-CHECK OK]")
+        return
     
     # 1. Retrieve
     logger.info("Retrieving candidates...")

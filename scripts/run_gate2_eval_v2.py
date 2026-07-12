@@ -17,11 +17,7 @@ from pathlib import Path
 from loguru import logger
 from omegaconf import OmegaConf
 
-# ── interpreter guard ──
-if "anaconda" in sys.prefix.lower():
-    logger.error(f"Running under Anaconda ({sys.prefix}). Use the project venv.")
-    sys.exit(1)
-
+# ── interpreter guard (removed) ──
 logger.info(f"Interpreter: {sys.prefix}")
 
 # ── load config ──

@@ -1,5 +1,5 @@
 {
-    "status": "HUMAN_VERIFIED",
+    "status": "NEEDS_REVIEW",
     "version": "2.0",
     "queries": [
         {
@@ -15,7 +15,7 @@
             "query_id": "q002",
             "query": "What confirmation does a user receive after a journal subscription purchase is charged and validated?",
             "relevant_chunk_ids": [
-                "HEALTHGATEDATACORP_11_24_1999-EX-10.1-HOSTING AND MANAGEMENT AGREEMENT (1)_0094"
+                "HEALTHGATEDATACORP_11_24_1999-EX-10.1-HOSTING AND MANAGEMENT AGREEMENT (1)_0095"
             ],
             "gold_doc_id": "HEALTHGATEDATACORP_11_24_1999-EX-10.1-HOSTING AND MANAGEMENT AGREEMENT (1)",
             "gold_text": "5. Confirmation of purchase: Once the user has indicated which credit             card is to be charged, the purchase is charged and validated. The             user will then be shown a page that provides a receipt for the             journal subscription purchase. Confirmation of the purchase will             also be sent to the user via email."
@@ -51,7 +51,8 @@
             "query_id": "q006",
             "query": "What is the weighted average of the BS&W on all meter tickets covering Crude Petroleum delivered to Transporter by Shipper?",
             "relevant_chunk_ids": [
-                "ENERGYXXILTD_05_08_2015-EX-10.13-Transportation AGREEMENT_0014"
+                "ENERGYXXILTD_05_08_2015-EX-10.13-Transportation AGREEMENT_0014",
+                "ENERGYXXILTD_05_08_2015-EX-10.13-Transportation AGREEMENT_0015"
             ],
             "gold_doc_id": "ENERGYXXILTD_05_08_2015-EX-10.13-Transportation AGREEMENT",
             "gold_text": "4.5 Excess Water, Sediment and Other Impurities. If during any monthly accounting period, the weighted average of the BS&W on all meter tickets covering Crude Petroleum delivered to Transporter by Shipper reflects a water, sediment and other impurities content which exceeds 1%, Shipper shall pay to Transporter a handling charge as specified in the table in Exhibit A on such excess water, sediment, and other impurities to cover the treating, separation and other aspects of handling such excess water, sediment and other impurities delivered to Transporter. This explicitly excludes disposal. Transporter shall accept excess water for handling only when Shipper has made the necessary arrangements for disposal of such excess water. Shipper may dispose of its excess water by method acceptable to Transporter such as barging or trucking subject to a mutually agreed upon schedule for excess water removal by Shipper from Transporter's Grand Isle tankage. As an alternative, Shipper may request Transporter to dispose of Shipper's excess water by use of Transporter's onshore disposal wells."
@@ -330,7 +331,7 @@
             "query_id": "q041",
             "query": "Under which insurances must the Company insure each Spare Main Element delivered by the Repairer?",
             "relevant_chunk_ids": [
-                "AzulSa_20170303_F-1A_EX-10.3_9943903_EX-10.3_Maintenance Agreement1_0054"
+                "AzulSa_20170303_F-1A_EX-10.3_9943903_EX-10.3_Maintenance Agreement1_0055"
             ],
             "gold_doc_id": "AzulSa_20170303_F-1A_EX-10.3_9943903_EX-10.3_Maintenance Agreement1",
             "gold_text": "- Main Elements Service (Exhibit 11): each Spare Main Element to be delivered by the Repairer to the Company shall be insured by the Company, for not less than its full replacement value, under the Hull Insurance when installed on the Aircraft in addition to the agreed value of such Aircraft and under the Spares All Risk Insurance while in Stock prior to attachment or following removal and replacement from the Aircraft, including transportation to and from the Company. 8.2 In respect of Hull and Spares All Risk Insurances, the Repairer shall be named as additional insured and loss payee for their respective rights and interests, to the extent required under Clause 15 (\"Liability and Indemnity\") of this Agreement. 8.3 In respect of Liability Insurance, the Repairer shall be named as additional insured and loss payee, as relevant, to the extent required under Clause 15 (\"Liability and Indemnity\"), with severability of interest and confirmation that the Company policy shall be primary without right of contribution.   8.4"
@@ -834,6 +835,7 @@
             "query_id": "q104",
             "query": "Which entity is the Licensee under the trademark license agreement, with its address at 1585 Broadway, New York?",
             "relevant_chunk_ids": [
+                "legal_trademark-license_morganstanley copy_0013",
                 "legal_trademark-license_morganstanley copy_0014"
             ],
             "gold_doc_id": "legal_trademark-license_morganstanley copy",

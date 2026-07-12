@@ -5,9 +5,11 @@ import time
 import json
 import asyncio
 import tempfile
+import gc
 from pathlib import Path
 from typing import List, Dict, Any
 import numpy as np
+import torch
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -62,54 +64,12 @@ async def evaluate_question(
 ) -> Dict[str, Any]:
     """Evaluate a single question: index 10 paras, retrieve single-shot vs multi-hop."""
     
-    # 1. Index the 10 paragraphs in a temporary index
-    sample_dir = Path(temp_dir) / sample['id']
-    sample_dir.mkdir(parents=True, exist_ok=True)
+    # 1. We no longer index on the fly. We use the pre-built pooled index.
+    # The pooled index was built using scripts/run_hotpotqa_ingestion.py
     
-    faiss_path = str(sample_dir / "faiss.index")
-    bm25_path = str(sample_dir / "bm25.pkl")
-    metadata_path = str(sample_dir / "metadata.db")
-    manifest_path = str(sample_dir / "manifest.json")
-    
-    indexer = Indexer(
-        faiss_path=faiss_path,
-        bm25_path=bm25_path,
-        metadata_db_path=metadata_path,
-        manifest_path=manifest_path,
-        embedding_dim=cfg.indexer.embedding_dim,
-        embedding_model=cfg.indexer.embedding_model,
-        chunker_config_hash="hotpotqa_eval"
-    )
-    
-    # Add paragraphs to index
-    all_chunks = []
-    for i, para in enumerate(sample["paragraphs"]):
-        # Sanitize title for filename
-        safe_title = "".join([c if c.isalnum() else "_" for c in para["title"]])
-        doc_id = para["title"] # Keep original for recall comparison
-        
-        # Write to temporary file so Indexer can hash it
-        doc_path = sample_dir / f"{safe_title}.txt"
-        doc_path.write_text(para["text"], encoding="utf-8")
-        
-        block = ParsedBlock(
-            text=para["text"],
-            page=1,
-            heading_path=[],
-            is_table=False,
-            source_path=str(doc_path),
-            char_start=0,
-            char_end=len(para["text"])
-        )
-        chunks = chunker.chunk_document(doc_id, [block])
-        
-        if chunks:
-            texts = [c.text for c in chunks]
-            embeddings = chunker.model.encode(
-                texts, batch_size=cfg.chunker.batch_size, normalize_embeddings=True, show_progress_bar=False
-            )
-            indexer.add_chunks(chunks, embeddings, doc_path)
-            all_chunks.extend(chunks)
+    faiss_path = "data/hotpotqa_index/faiss.index"
+    bm25_path = "data/hotpotqa_index/bm25.pkl"
+    metadata_path = "data/hotpotqa_index/metadata.db"
             
     # 2. Override config dynamically for this query so HybridRetriever uses this index
     OmegaConf.update(registry.cfg, "indexer.faiss_index_path", faiss_path)
@@ -163,17 +123,35 @@ async def run_eval(cfg: DictConfig):
     
     results = []
     
-    # Run evaluations sequentially (to avoid NLI/LLM concurrency issues or high memory)
-    with tempfile.TemporaryDirectory() as temp_dir:
-        for i, sample in enumerate(samples):
-            logger.info(f"Evaluating {i+1}/{len(samples)}: {sample['question']}")
-            res = await evaluate_question(sample, cfg, chunker, temp_dir)
-            results.append(res)
-            
-            # Print running average
-            avg_single = np.mean([r["single_recall"] for r in results])
-            avg_agent = np.mean([r["agent_recall"] for r in results])
-            logger.info(f"Running Avg MSR -> Single: {avg_single:.4f} | Agent: {avg_agent:.4f}")
+    out_file = Path("evaluation/benchmarks/results_phase3.json")
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    jsonl_file = out_file.with_suffix('.jsonl')
+    
+    # Open the JSONL file in append mode or write mode
+    logger.info(f"Writing incremental results to {jsonl_file}")
+    with open(jsonl_file, "w") as f_jsonl:
+        # Run evaluations sequentially (to avoid NLI/LLM concurrency issues or high memory)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for i, sample in enumerate(samples):
+                logger.info(f"Evaluating {i+1}/{len(samples)}: {sample['question']}")
+                res = await evaluate_question(sample, cfg, chunker, temp_dir)
+                results.append(res)
+                
+                # Incrementally save to JSONL
+                f_jsonl.write(json.dumps(res) + "\n")
+                f_jsonl.flush()
+                
+                # Print running average
+                avg_single = np.mean([r["single_recall"] for r in results])
+                avg_agent = np.mean([r["agent_recall"] for r in results])
+                logger.info(f"Running Avg MSR -> Single: {avg_single:.4f} | Agent: {avg_agent:.4f}")
+                
+                # Clear memory to prevent MPS OOM
+                gc.collect()
+                if torch.backends.mps.is_available():
+                    torch.mps.empty_cache()
+                elif torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
     # Final metrics
     avg_single = float(np.mean([r["single_recall"] for r in results]))
@@ -185,8 +163,7 @@ async def run_eval(cfg: DictConfig):
     logger.info(f"Multi-Hop Agent MSR:      {avg_agent:.4f}")
     logger.info("="*50)
     
-    out_file = Path("evaluation/benchmarks/results_phase3.json")
-    out_file.parent.mkdir(parents=True, exist_ok=True)
+    # Still write the final summary JSON
     with open(out_file, "w") as f:
         json.dump({
             "metrics": {

@@ -14,9 +14,10 @@ from transformers import (
 )
 from sklearn.metrics import accuracy_score, f1_score
 import mlflow
+import hydra
 
 from loguru import logger
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
 
 class QueryDataset(Dataset):
@@ -52,11 +53,8 @@ def compute_metrics(eval_pred):
     return {"accuracy": acc, "f1": f1}
 
 
-def main():
-    cfg = OmegaConf.load("configs/training_config.yaml")
-    cli_cfg = OmegaConf.from_cli(sys.argv[1:])
-    cfg = OmegaConf.merge(cfg, cli_cfg)
-    
+@hydra.main(version_base=None, config_path="../configs", config_name="training_config")
+def main(cfg: DictConfig):
     dry_run = cfg.get("dry_run", False)
 
     out_dir = Path(cfg.classifier.output_dir)

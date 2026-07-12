@@ -119,10 +119,11 @@ class DocumentParser:
                                     heading_path=[],
                                     is_table=True,
                                     source_path=source_path,
-                                    char_start=0,
-                                    char_end=len(table_text.strip()),
+                                    char_start=char_offset,
+                                    char_end=char_offset + len(table_text.strip()),
                                 )
                             )
+                            char_offset += len(table_text.strip()) + 2
 
                 # Extract text outside tables
                 def outside_tables(obj, table_bboxes=table_bboxes):
