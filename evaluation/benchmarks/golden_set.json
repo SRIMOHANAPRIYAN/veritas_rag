@@ -1,5 +1,5 @@
 {
-    "status": "NEEDS_REVIEW",
+    "status": "HUMAN_VERIFIED",
     "version": "2.0",
     "queries": [
         {
@@ -905,5 +905,5 @@
             "gold_text": "or condition, or of a manifestation of a recognized disease or condition, or for the relief of symptoms associated with a recognized disease or condition, in each case for any size patient population, which, if such Licensed Product is approved in the U.S., would be reflected in the \"Indications and Usage\" section of labeling pursuant to 21 C.F.R. \u00a7201.57(c)(2) or, to the extent applicable, any comparable labeling section outside the U.S., subject to the following: (a) subtypes of the same disease or condition are not additional Indications for such Licensed Product; (b) different symptom domains or domains of impairment of the same disease or condition are not additional Indications for such Licensed Product; (c) the approved use of such Licensed Product for such disease in different combinations or co-therapies of treatments are not additional Indications for such Licensed Product (e.g., monotherapy vs. add-on or combination therapy with another agent in the same disease); (d) treatment, prevention and cure of the same disease or the same disease subtype with such Licensed Product are not additional Indications for such Licensed Product; (e) the approved use of such Licensed Product for such disease in a different line of treatment or a different temporal position in a treatment algorithm for the same disease or condition are not additional Indications for such Licensed Product (e.g., first line vs. second line therapy in the same disease or condition); and (f) treatment of the same disease or condition with such Licensed Product in an expanded, modified or additional patient population are not additional Indications for such Licensed Product."
         }
     ],
-    "provenance": "v2.0 2026-07-04: full review of all 100 flan-t5 candidates (16 kept, 73 rewritten, 11 deleted as degenerate/unanswerable/boilerplate-ambiguous) via LLM-assisted review with corpus-wide ambiguity analysis; 11 replacement queries hand-drafted from fresh chunks; owner manually spot-verified via golden_set_review.html. Decision log: golden_set_review_decisions.json"
+    "provenance": "v2.1 2026-07-13: re-indexed for OFFSETS-01 (document-absolute offsets); chunk IDs unchanged (CHUNK-02 boundaries stable); all 100 mappings re-verified by >=50% gold_text overlap."
 }

@@ -25,17 +25,21 @@ def run():
             needs_review.append(q["query_id"])
             continue
 
-        c.execute("SELECT chunk_id, char_start, char_end, text FROM chunks WHERE doc_id=? ORDER BY chunk_index ASC", (gold_doc_id,))
+        # Fix for OFFSETS-01: Some docs have a " copy" suffix in the filename and DB, but the golden set
+        # gold_doc_id does not. We check both to prevent phantom NEEDS_REVIEW flags.
+        c.execute("SELECT chunk_id, char_start, char_end, text, doc_id FROM chunks WHERE doc_id=? OR doc_id=? ORDER BY chunk_index ASC", (gold_doc_id, f"{gold_doc_id} copy"))
         rows = c.fetchall()
 
         if not rows:
+            print(f"No chunks found in DB for doc_id {gold_doc_id} (or copy)")
             needs_review.append(q["query_id"])
             continue
             
-        raw_path = Path(f"data/raw/{gold_doc_id}.txt")
+        actual_doc_id = rows[0][4]
+        raw_path = Path(f"data/raw/{actual_doc_id}.txt")
         if not raw_path.exists():
             # try to find it with glob
-            matches = list(Path("data/raw").rglob(f"{gold_doc_id}.*"))
+            matches = list(Path("data/raw").rglob(f"{gold_doc_id}*.*"))
             if matches:
                 raw_path = matches[0]
             else:
@@ -67,7 +71,7 @@ def run():
             
         gold_len = end_idx - start_idx
         relevant_chunks = []
-        for chunk_id, c_start, c_end, c_text in rows:
+        for chunk_id, c_start, c_end, c_text, _ in rows:
             overlap_start = max(start_idx, c_start)
             overlap_end = min(end_idx, c_end)
             overlap = max(0, overlap_end - overlap_start)
