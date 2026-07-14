@@ -10,3 +10,5 @@ __pycache__/
 training_data.zip
 outputs/
 golden_set_review.html
+gate3_current.txt
+gate3_skip.txt

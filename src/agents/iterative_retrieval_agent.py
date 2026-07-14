@@ -50,8 +50,9 @@ class ZeroShotDebertaNLIScorer:
 class IterativeRetrievalAgent:
     """Agent that performs multi-hop reasoning by decomposing and verifying."""
     
-    def __init__(self, max_iterations: int = 3):
+    def __init__(self, max_iterations: int = 3, max_sub_questions: int = 3):
         self.max_iterations = max_iterations
+        self.max_sub_questions = max_sub_questions
         self.llm_client = LlamaClient()
         self.retriever = registry.get_hybrid_retriever()
         self.reranker = registry.get_reranker()
@@ -61,9 +62,24 @@ class IterativeRetrievalAgent:
 
     async def decompose_query(self, query: str) -> List[str]:
         """Decompose a complex query into sub-queries."""
-        prompt = DECOMPOSITION_PROMPT.format(query=query)
+        prompt = DECOMPOSITION_PROMPT.format(query=query, max_sub_questions=self.max_sub_questions)
         response = await self.llm_client.generate(prompt)
-        sub_queries = [line.strip("- ").strip() for line in response.split("\n") if line.strip().startswith("-")]
+        try:
+            import json
+            import re
+            
+            # Extract JSON from potential markdown formatting
+            match = re.search(r'\{.*\}', response, re.DOTALL)
+            if match:
+                data = json.loads(match.group(0))
+            else:
+                data = json.loads(response)
+                
+            sub_queries = data.get("sub_questions", [])
+        except Exception as e:
+            logger.error(f"Failed to parse JSON from decomposition: {response}. Error: {e}")
+            sub_queries = []
+            
         if not sub_queries:
             sub_queries = [query]
         return sub_queries

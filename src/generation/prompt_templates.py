@@ -18,11 +18,35 @@ Query: {query}
 Answer:"""
 
 DECOMPOSITION_PROMPT = """You are an expert at breaking down complex questions into simpler, atomic sub-questions.
-Given the complex question below, break it down into a list of simpler sub-questions that need to be answered to resolve the main question.
-Return each sub-question on a new line, starting with a dash (-).
+Given the complex question below, break it down into simpler sub-questions that need to be answered to resolve the main question.
+
+CRITICAL REQUIREMENTS:
+1. ENTITY PRESERVATION: Every sub-question MUST carry forward ALL specific named entities, titles, dates, and numbers from the original question verbatim. Never replace an entity with a generic noun.
+FORBIDDEN: "What is the name of the X?" and "What is the definition of X?"
+2. MAX {max_sub_questions} SUB-QUESTIONS: Do not generate more than {max_sub_questions} sub-questions.
+3. BRIDGE AWARENESS: If answering requires finding an intermediate entity first (hop 1) then using it (hop 2), phrase hop 1 to find the bridge entity and hop 2 to carry every remaining constraint.
+
+EXAMPLES:
+
+Q: "What American bluegrass singer performed the song Restless with The New Nashville Cats?"
+SUB: ["Who performed the song Restless with The New Nashville Cats?", "What is the nationality and genre of the performer of Restless with The New Nashville Cats?"]
+
+Q: "According to the 2010 census, what was the population of the city after which the vice president in April 1813 was named?"
+SUB: ["Which city was the vice president who took office in April 1813 named after?", "What was the 2010 census population of that city?"]
+
+Q: "The Lucy Maud Montgomery novel about Anne Shirley was first translated into Japanese by what woman?"
+SUB: ["Which Lucy Maud Montgomery novel features the character Anne Shirley?", "What woman first translated that Lucy Maud Montgomery novel into Japanese?"]
+
+Output strict JSON in exactly this format:
+{{
+  "sub_questions": [
+    "sub_query_1",
+    "sub_query_2"
+  ]
+}}
 
 Complex Question: {query}
-Sub-questions:"""
+JSON Output:"""
 
 COVERAGE_CHECK_PROMPT = """Given the original query, the current accumulated context, and the draft answer, determine what information is still missing to fully answer the query.
 If the query is fully answered, reply with exactly "FULLY_ANSWERED".

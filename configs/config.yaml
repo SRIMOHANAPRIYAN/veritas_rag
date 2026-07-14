@@ -30,6 +30,7 @@ generation:
   n_ctx: 8192
   max_tokens: 512
   temperature: 0.0
+  max_sub_questions: 3
 
 verification:
   nli_model_path: "models/nli_verifier/"
