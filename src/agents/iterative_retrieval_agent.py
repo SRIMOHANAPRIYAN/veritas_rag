@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from src.generation.llm_client import LlamaClient
 from src.generation.model_registry import registry
 from src.generation.prompt_templates import DECOMPOSITION_PROMPT, COVERAGE_CHECK_PROMPT
+from src.verification.nli_verifier import NLIVerifier
 from src.generation.context_assembler import ContextAssembler
 
 class NLIScorer(Protocol):
@@ -50,14 +51,14 @@ class ZeroShotDebertaNLIScorer:
 class IterativeRetrievalAgent:
     """Agent that performs multi-hop reasoning by decomposing and verifying."""
     
-    def __init__(self, max_iterations: int = 3, max_sub_questions: int = 3):
+    def __init__(self, max_iterations: int = 3, max_sub_questions: int = 3, **kwargs):
         self.max_iterations = max_iterations
         self.max_sub_questions = max_sub_questions
-        self.llm_client = LlamaClient()
-        self.retriever = registry.get_hybrid_retriever()
-        self.reranker = registry.get_reranker()
-        self.nli_scorer = ZeroShotDebertaNLIScorer()
-        self.context_assembler = ContextAssembler()
+        self.llm_client = kwargs.get("llm_client") or LlamaClient()
+        self.retriever = kwargs.get("retriever") or registry.get_hybrid_retriever()
+        self.reranker = kwargs.get("reranker") or registry.get_reranker()
+        self.nli_scorer = NLIVerifier()
+        self.context_assembler = kwargs.get("context_assembler") or ContextAssembler()
         self.entailment_threshold = 0.80
 
     async def decompose_query(self, query: str) -> List[str]:

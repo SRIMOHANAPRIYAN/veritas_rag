@@ -111,9 +111,12 @@ class ModelRegistry:
 
     def get_nli_model(self) -> Tuple[Any, Any]:
         if self._nli_model is None:
-            # Phase 3 NLI uses zero-shot DeBERTa v3 MNLI model. 
-            # In Phase 4, we can switch to self.cfg.verification.nli_model_path
-            model_name = "cross-encoder/nli-deberta-v3-base" 
+            # Try local fine-tuned path first, fallback to base model
+            local_path = self.cfg.verification.get("nli_model_path", "models/nli_verifier/")
+            if Path(local_path).exists():
+                model_name = local_path
+            else:
+                model_name = "cross-encoder/nli-deberta-v3-base"
             device = self.cfg.verification.get("device", DEVICE)
             logger.info(f"Loading NLI model {model_name} on {device}")
             self._nli_tokenizer = AutoTokenizer.from_pretrained(model_name)

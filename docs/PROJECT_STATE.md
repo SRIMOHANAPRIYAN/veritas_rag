@@ -10,7 +10,7 @@ _Last updated: 2026-07-12. Read this file + the repo to resume with zero chat hi
 |-------|------|--------|---------------------|
 | **1 — Ingestion & Retrieval** | Gate 1 | **CLOSED ✅** | Semantic MRR 0.6535, Recall@5 0.7700; Fixed-512 baseline MRR 0.5752. 100/100 golden remap. Corpus v2.0 frozen (212 docs). |
 | **2 — Reranker & Classifier** | Gate 2 | **CLOSED ✅** | Zero-shot reranker MRR **0.8068**; fine-tuned v2 MRR 0.7141 (negative result, documented). Classifier v2 14/15 with keyword fallback. |
-| **3 — Generation & Multi-Hop Agent** | Gate 3 | **IN PROGRESS — redesign required** | Prior 0.86/0.85 result invalidated — benchmark was too easy (per-question 10-para index, ceiling effect); see pooled-index redesign. |
+| **3 — Generation & Multi-Hop Agent** | Gate 3 | **CLOSED ✅** | Agent 0.5909 vs Single-shot 0.4909 on hard subset (+0.10). Overall 0.85 vs 0.86. 4 catastrophic failures (parallel decomposition limitation). |
 | **4 — Evaluation, Explainability, Monitoring** | Gate 4 | **NOT STARTED** | `src/verification/`, `src/audit/`, `src/monitoring/` are empty `__init__.py` stubs. Phase 4 plan has not been created. |
 
 Results files: `evaluation/benchmarks/results_phase{1,2,2_v2,3}.json`.
@@ -19,11 +19,10 @@ Results files: `evaluation/benchmarks/results_phase{1,2,2_v2,3}.json`.
 
 ## 2. Active Work / Next Concrete Action
 
-**Gate 3 is open — pooled-index redesign required.** Phase 4 does NOT start until Gate 3 closes.
-
-1. **Rerun Gate 3 with a POOLED index**: build a single shared index over all 200 questions' paragraphs (~2000 docs) into `data/hotpotqa_index/` (built once, reused for every query). Measure single-shot vs multi-hop agent MSR on that index. **Pass bar: agent MSR > 0.65 AND agent > single-shot.**
-2. **Latency**: add `--warm-check` to `scripts/ask.py` — run 2 queries in one process, report the 2nd query's wall time (eliminates cold-start loading from the measurement).
-3. The Phase 2 cleanup ticket (§3) should be cleared before or alongside Gate 3 rerun.
+**Gate 3 is CLOSED.** Phase 4 starts next.
+ 
+ 1. **Phase 4 Implementation Plan:** Create the detailed plan for the claim-level NLI verifier, span alignment, selective regeneration, audit record, and query_pipeline.
+ 2. **Phase 2 Cleanup Ticket:** (§3) should be cleared alongside Phase 4 work.
 
 ---
 
@@ -35,8 +34,8 @@ Results files: `evaluation/benchmarks/results_phase{1,2,2_v2,3}.json`.
 - [ ] **CPU-only 3-sample dry-run test** per training script (catches API breakage like `eval_strategy` before Colab).
 - [ ] **Unify training CLIs on Hydra**: `generate_training_data.py` still uses `argparse`; the others use Hydra or custom args. Standardize.
 
-### OFFSETS-01 (tech debt — documented in README)
-Per-block `char_start`/`char_end` in the semantic chunker reset per `ParsedBlock` instead of being document-absolute. Phase 4's span-alignment audit requires document-absolute offsets. **Must be fixed with a re-index before Phase 4 audit code is written.**
+### OFFSETS-01 (DONE)
+ Per-block `char_start`/`char_end` in the semantic chunker have been updated to be document-absolute. Re-indexing is complete and verified. Golden set mappings have been fully updated.
 
 ---
 

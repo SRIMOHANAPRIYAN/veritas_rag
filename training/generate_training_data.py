@@ -1,17 +1,17 @@
 import json
 import random
 import sqlite3
-import argparse
 from pathlib import Path
 from tqdm import tqdm
+
+import hydra
+from omegaconf import DictConfig, OmegaConf
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from datasets import load_dataset
 
 from loguru import logger
-import hydra
-from omegaconf import DictConfig
 
 from src.retrieval.hybrid_retriever import HybridRetriever
 
@@ -36,19 +36,13 @@ def generate_queries_for_chunk(text, tokenizer, model, device, num_queries=2):
         queries.append(query)
     return queries
 
-from omegaconf import OmegaConf
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--num_chunks", type=int, default=1500, help="Number of chunks to sample")
-    parser.add_argument("--queries_per_chunk", type=int, default=2, help="Queries per chunk")
-    parser.add_argument("--output_dir", type=str, default="data/training")
+@hydra.main(version_base=None, config_path="../configs", config_name="config")
+def main(cfg: DictConfig):
+    num_chunks = cfg.get("generate_data", {}).get("num_chunks", 1500)
+    queries_per_chunk = cfg.get("generate_data", {}).get("queries_per_chunk", 2)
+    output_dir = cfg.get("generate_data", {}).get("output_dir", "data/training")
     
-    args = parser.parse_args()
-    
-    cfg = OmegaConf.load("configs/config.yaml")
-    
-    out_dir = Path(args.output_dir)
+    out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -100,15 +94,15 @@ def main():
                                 
             logger.info(f"Excluded {len(excluded_chunk_ids)} gold chunks (and neighborhoods) from query synthesis.")
         
-        logger.info(f"Sampling {args.num_chunks} chunks from metadata.db...")
+        logger.info(f"Sampling {num_chunks} chunks from metadata.db...")
         with sqlite3.connect(cfg.indexer.metadata_db_path) as conn:
             cursor = conn.cursor()
             if excluded_chunk_ids:
                 placeholders = ",".join("?" for _ in excluded_chunk_ids)
                 query = f"SELECT chunk_id, text FROM chunks WHERE chunk_id NOT IN ({placeholders}) ORDER BY RANDOM() LIMIT ?"
-                cursor.execute(query, tuple(excluded_chunk_ids) + (args.num_chunks,))
+                cursor.execute(query, tuple(excluded_chunk_ids) + (num_chunks,))
             else:
-                cursor.execute("SELECT chunk_id, text FROM chunks ORDER BY RANDOM() LIMIT ?", (args.num_chunks,))
+                cursor.execute("SELECT chunk_id, text FROM chunks ORDER BY RANDOM() LIMIT ?", (num_chunks,))
             chunks = cursor.fetchall()
             
         logger.info("Generating triplets...")
@@ -117,7 +111,7 @@ def main():
                 if len(text.split()) < 20:
                     continue  # skip very short chunks
                     
-                queries = generate_queries_for_chunk(text, tokenizer, model, device, num_queries=args.queries_per_chunk)
+                queries = generate_queries_for_chunk(text, tokenizer, model, device, num_queries=queries_per_chunk)
                 
                 for query in queries:
                     # Retrieve hard negative

@@ -61,3 +61,13 @@ Draft Answer:
 {draft_answer}
 
 Missing Information Search Query (or "FULLY_ANSWERED"):"""
+
+REGEN_PROMPT = """You are an editor correcting a contradicted sentence.
+Original Question: {question}
+Original Sentence (Contradicted): {sentence}
+Valid Evidence: {evidence}
+
+Rewrite the Original Sentence so that it is strictly supported by the Valid Evidence.
+If the evidence does not support answering the question, reply with "I cannot answer this based on the provided evidence."
+Do not include any explanation or extra text. Output ONLY the rewritten sentence.
+"""

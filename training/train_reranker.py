@@ -14,6 +14,9 @@ import json
 import random
 from pathlib import Path
 
+import os
+os.environ["WANDB_DISABLED"] = "true"  # Disable wandb explicitly
+
 from datasets import load_dataset
 from sentence_transformers import CrossEncoder, InputExample
 from sentence_transformers.cross_encoder.evaluation import (
